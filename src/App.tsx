@@ -11,6 +11,8 @@ import {
   Copy, 
   Info 
 } from 'lucide-react';
+import { AssistantBox } from './components/AssistantBox';
+import { useProactiveAssistant } from './hooks/useProactiveAssistant';
 
 const steps = [
   { id: 'intro', title: 'Welcome', icon: Terminal },
@@ -32,6 +34,16 @@ export default function App() {
     outputFormat: 'text',
     code: 'export default async function hook(context) {\n  // Access prompt: context.prompt\n  console.log("Intercepting...");\n  return context;\n}'
   });
+
+  const { suggestion, isThinking, clearSuggestion } = useProactiveAssistant(
+    formData,
+    'http://localhost:8080/v1/chat/completions', 
+    30000 // Poll every 30s
+  );
+
+  const handleApplySuggestion = (patch: Partial<typeof formData>) => {
+    setFormData(prev => ({ ...prev, ...patch }));
+  };
 
   const handleNext = () => setCurrentStep(prev => Math.min(prev + 1, steps.length - 1));
   const handleBack = () => setCurrentStep(prev => Math.max(prev - 1, 0));
@@ -88,6 +100,13 @@ export default function App() {
               This tool generates a full installation script for your custom Gemini CLI extension. Ensure you read the descriptions for each parameter.
             </p>
           </div>
+
+          <AssistantBox 
+            suggestion={suggestion} 
+            isThinking={isThinking} 
+            onApply={handleApplySuggestion}
+            onDismiss={clearSuggestion}
+          />
         </div>
 
         {/* Right Content Area */}
